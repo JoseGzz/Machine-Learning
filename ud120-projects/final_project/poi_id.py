@@ -201,4 +201,5 @@ features_train, features_test, labels_train, labels_test = \
 ### generates the necessary .pkl files for validating your results.
 
 #dump_classifier_and_data(clf, my_dataset, features_list)
+# currently reaches 93.6170212766% accuracy
 dump_classifier_and_data(clf, my_dataset, all_features)
