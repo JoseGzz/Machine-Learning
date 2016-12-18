@@ -49,6 +49,7 @@ df = df.replace('NaN', np.nan)
 df[financial_features] = df[financial_features].fillna(0)
 df[email_features] = df[email_features].fillna(df[email_features].median())
 
+### Task 3: Create new feature(s)
 # create new feature: relation of messages sent and recieved from poi's
 df['fracion_of_messages_to_poi'] = df.from_this_person_to_poi / df.from_messages
 df['fracion_of_messages_from_poi'] = df.from_poi_to_this_person / df.to_messages
@@ -71,6 +72,7 @@ possible_outliers = [feature for feature in all_features if df[feature].std() > 
 df = df.T.drop('email_address')
 df = df.T
 
+### Task 2: Remove outliers
 # removing outliers
 # It was observed that the accuracy is the same with or without outliers
 # but removing them increased the training time significantly (while loop iterations below)
@@ -98,6 +100,8 @@ features = np.array(df.values.tolist())
 # techniques for feature selection but with poor results up until now
 
 # SelectKBest
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import f_classif
 for i in range(1,21):
     X_new = SelectKBest(f_classif, k=7).fit_transform(features_train, labels_train)
     X_new_test = SelectKBest(f_classif, k=7).fit_transform(features_test, labels_test)
@@ -121,12 +125,8 @@ for i in range(0, 17):
 
 '''
     
-from sklearn.feature_selection import SelectKBest
-from sklearn.feature_selection import f_classif
 X, y = features, labels
 
-### Task 2: Remove outliers
-### Task 3: Create new feature(s)
 ### Store to my_dataset for easy export below.
 my_dataset = data_dict
 
@@ -143,7 +143,7 @@ labels, features = targetFeatureSplit(data)
 ### you'll need to use Pipelines. For more info:
 ### http://scikit-learn.org/stable/modules/pipeline.html
 
-
+# make three folds to divide the data
 kf = KFold(len(labels), 3)
 
 # training and testing sets division
@@ -153,19 +153,15 @@ for train_indices, test_indices in kf:
     labels_train   = [y[i] for i in train_indices]
     labels_test    = [y[i] for i in test_indices ]
 
+# classifier options
 #clf = GaussianNB()
 #clf = svm.SVC(kernel='rbf')
-clf  = tree.DecisionTreeClassifier(random_state=None)
+clf  = tree.DecisionTreeClassifier(random_state = None)
 
-iteration      = 0
-score          = 0
-max_iterations = 250
-while score < 0.93 and iteration < max_iterations:
-    iteration += 1
-    clf.fit(features_train, labels_train)
-    score = clf.score(features_test,labels_test)
-
-print 'accuracy:', 100*score, "%, after ", iteration, "iterations"
+iteration           = 0
+score               = 0
+max_iterations      = 250
+max_actual_accuracy = 0.93
 
 
 ### Task 5: Tune your classifier to achieve better than .3 precision and recall 
@@ -173,12 +169,25 @@ print 'accuracy:', 100*score, "%, after ", iteration, "iterations"
 ### folder for details on the evaluation method, especially the test_classifier
 ### function. Because of the small size of the dataset, the script uses
 ### stratified shuffle split cross validation. For more info: 
+
+# iterate max_iterations times or until max_actual_accuracy is reached
+# training the clasifier, this could cause performance trouble on large data sets
+# Leaving it at the default value of None (for the tree)  means that the fit method will use
+# numpy.random's singleton random state, which is not predictable and not the same across runs
+# and cannot be extracted in any way
+while score < max_actual_accuracy and iteration < max_iterations:
+    iteration += 1
+    clf.fit(features_train, labels_train)
+    score = clf.score(features_test,labels_test)
+
+print 'accuracy:', 100*score, "%, after ", iteration, "iterations"
+
+
 ### http://scikit-learn.org/stable/modules/generated/sklearn.cross_validation.StratifiedShuffleSplit.html
+# calculate evaluation metrics
 pred = clf.predict(features_test)
-#print "random_state", tree.DecisionTreeClassifier().get_params()['random_state']# clf.get_params()['random_state']
 print 'precision = ', precision_score(labels_test,pred)
 print 'recall = ', recall_score(labels_test,pred)
-
 
 # Example starting point. Try investigating other evaluation techniques!
 '''
